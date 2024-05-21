@@ -1,30 +1,31 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { scheduleTestJob } from "#application/k8Service.js";
+// routes/testRequest/index.ts
+import type { FastifyPluginAsync } from "fastify";
+import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import schema from "./schema.js";
 import { sendTestRequestMessage } from "#application/rabbitmqService.js";
+import { randomUUID } from "node:crypto";
 
-interface TestRequest {
-  id: string;
-  dockerImage: string;
-  interval: number;
-  repeat: number;
-  additionalInfo?: string;
-}
+const testRequestRoute: FastifyPluginAsync = async (fastify) => {
+  const fastifyT = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
-export default async function testRequestRoutes(fastify: FastifyInstance) {
-  fastify.post(
+  fastifyT.post(
     "/test-request",
-    async (
-      request: FastifyRequest<{ Body: TestRequest }>,
-      reply: FastifyReply,
-    ) => {
+    { schema: schema.createTestRequestSchema },
+    async (request, reply) => {
       const testRequest = request.body;
+
       try {
-        await sendTestRequestMessage(testRequest);
-        await scheduleTestJob(testRequest.id, testRequest.dockerImage);
-        reply.send({ status: "Test request submitted successfully" });
+        await sendTestRequestMessage({
+          id: randomUUID(),
+          createdAt: new Date().toISOString(),
+          ...testRequest,
+        });
+        reply.send({ message: "Test request submitted successfully" });
       } catch (error) {
-        reply.status(500).send({ error: "Failed to submit test request" });
+        reply.status(500).send({ message: "Failed to submit test request" });
       }
     },
   );
-}
+};
+
+export default testRequestRoute;

@@ -5,29 +5,15 @@ import env from "#config/env.js";
 const openapi: Partial<OpenAPIV3.Document | OpenAPIV3_1.Document> = {
   openapi: "3.1.0",
   info: {
-    title: "GrabTheWord API",
+    title: "Worker Manager API",
     version: "1.0.0",
-    description:
-      "API to create, store, retrieve and update word-cards you want to learn",
+    description: "API to schedule tests images execution",
   },
   servers: [
     {
       url: env.API_HOST,
       description: "Remote server",
     },
-  ],
-  components: {
-    securitySchemes: {
-      bearerAuth: {
-        type: "http",
-        scheme: "bearer",
-        bearerFormat: "JWT",
-      },
-    },
-  },
-  tags: [
-    { name: "auth", description: "Sign In/Up/Out" },
-    { name: "dictionary", description: "Words" },
   ],
 };
 
