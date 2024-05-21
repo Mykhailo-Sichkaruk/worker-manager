@@ -1,19 +1,13 @@
 import amqp, { Connection, Channel, ConsumeMessage } from "amqplib";
 import env from "#config/env.js";
 import { log } from "#infrastructure/log.js";
-import { TestRequest, TestResult } from "#domain/test/index.js";
-import Ajv from "ajv";
+import { TestRequest, TestResult, testRequestValidator, testResultValidator } from "#domain/test/index.js";
 
 const RESULT_QUEUE = "result_queue";
 const REQUEST_QUEUE = "read_queue";
 
 let connection: Connection;
 let channel: Channel;
-
-const ajv = new Ajv.default({ allErrors: true });
-
-export const testResultValidator = ajv.compile<TestResult>(TestResult);
-export const testRequestValidator = ajv.compile<TestRequest>(TestRequest);
 
 export const connectRabbitMQ = async () => {
   connection = await amqp.connect(env.RABBITMQ_URL);
