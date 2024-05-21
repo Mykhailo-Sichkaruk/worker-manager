@@ -10,7 +10,7 @@ const start = async () => {
     log.info("Start repetative checking of test requests.");
     setInterval(async () => {
       await processRequest();
-    });
+    }, 10000);
   } catch (err) {
     log.fatal(err);
     process.exit(1);
