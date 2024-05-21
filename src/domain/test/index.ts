@@ -18,8 +18,8 @@ export const RepeatPolicy = Type.Object({
 export const TestRequest = Type.Intersect([
   Test,
   Type.Object({
-    createdAt: Type.String({ format: "date-time" }),
-    repeatPolicy: Type.Optional(RepeatPolicy),
+    startAt: Type.String({ format: "date-time" }),
+    repeatPolicy: RepeatPolicy,
   }),
 ]);
 

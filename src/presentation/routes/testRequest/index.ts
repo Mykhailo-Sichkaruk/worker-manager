@@ -17,7 +17,7 @@ const testRequestRoute: FastifyPluginAsync = async (fastify) => {
       try {
         await sendTestRequestMessage({
           id: randomUUID(),
-          createdAt: new Date().toISOString(),
+          startAt: new Date().toISOString(),
           ...testRequest,
         });
         reply.send({ message: "Test request submitted successfully" });

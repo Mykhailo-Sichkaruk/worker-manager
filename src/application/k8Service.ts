@@ -1,5 +1,9 @@
 import { log } from "#infrastructure/log.js";
 import { KubeConfig, BatchV1Api, V1Job } from "@kubernetes/client-node";
+import {
+  consumeTestRequests,
+  sendTestRequestMessage,
+} from "#application/rabbitmqService.js";
 
 const NAMESPACE = "thesis";
 
@@ -9,7 +13,7 @@ const k8sBatchV1Api = kubeConfig.makeApiClient(BatchV1Api);
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const scheduleTestJob = async (jobName: string, dockerImage: string) => {
+export const runImage = async (jobName: string, dockerImage: string) => {
   const job: V1Job = {
     apiVersion: "batch/v1",
     kind: "Job",
@@ -73,4 +77,28 @@ export const scheduleTestJob = async (jobName: string, dockerImage: string) => {
   } catch (error) {
     log.error(`Error scheduling job ${jobName}: ${error}`);
   }
+};
+
+export const processRequest = async () => {
+  consumeTestRequests(async (msg) => {
+    log.info("Received test request", { msg });
+    // If there is only one repetition, we can schedule the job directly
+    if (msg.startAt >= new Date().toISOString()) {
+      log.info("Test request is scheduled for later", { msg });
+      await sendTestRequestMessage(msg);
+      return;
+    }
+
+    if (msg.repeatPolicy?.repeats === 1) {
+      await runImage(msg.id, msg.imageUrl);
+      return;
+    }
+    await runImage(msg.id, msg.imageUrl);
+    msg.repeatPolicy.repeats--;
+    log.info("Repeatet test request executed, scheduling next", { msg });
+    msg.startAt = new Date(
+      new Date(msg.startAt).getTime() + msg.repeatPolicy.intervalSec * 1000,
+    ).toISOString();
+    await sendTestRequestMessage(msg);
+  });
 };

@@ -1,21 +1,15 @@
 import { startHttpServer } from "#presentation/server.js";
-import {
-  createQueues,
-  consumeTestRequests,
-} from "#application/rabbitmqService.js";
+import { createQueues } from "#application/rabbitmqService.js";
 import { log } from "#infrastructure/log.js";
-import { scheduleTestJob } from "#application/k8Service.js";
+import { processRequest } from "#application/k8Service.js";
 
 const start = async () => {
   try {
     await createQueues();
     await startHttpServer();
-    setInterval(() => {
-      log.info("Checking rabbitmq connection");
-      consumeTestRequests(async (msg) => {
-        log.info("Received test request", { msg });
-        await scheduleTestJob(msg.id, msg.imageUrl);
-      });
+    log.info("Start repetative checking of test requests.");
+    setInterval(async () => {
+      await processRequest();
     });
   } catch (err) {
     log.fatal(err);
